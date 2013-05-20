@@ -1,0 +1,84 @@
+<?php
+
+/**
+ * ProcessWire 'TemplateHasTags'
+ *
+ * Simple module that provides a method for checking if template has a certain tag (or not).
+ * 
+ * ProcessWire 2.x 
+ * Copyright (C) 2010 by Ryan Cramer 
+ * Licensed under GNU/GPL v2, see LICENSE.TXT
+ * 
+ * http://www.processwire.com
+ * http://www.ryancramer.com
+ *
+ */
+
+class TemplateHasTags extends WireData implements Module {
+
+	/**
+	 * getModuleInfo is a module required by all modules to tell ProcessWire about them
+	 *
+	 * @return array
+	 *
+	 */
+	public static function getModuleInfo() {
+
+		return array(
+
+			'title' => 'Template Has Tags', 
+
+			'version' => 100, 
+
+			'summary' => 'Simple Module that provides a method for checking if the current template has got one or more specific template tags.',
+			
+			'href' => 'http://www.processwire.com',
+
+			'singular' => true, 
+
+			'autoload' => true, 
+			);
+	}
+
+	/**
+	 * Initialize the module
+	 *
+	 * ProcessWire calls this when the module is loaded. For 'autoload' modules, this will be called
+	 * when ProcessWire's API is ready. As a result, this is a good place to attach hooks. 
+	 *
+	 */
+	public function init() {
+		$this->addHook('Page::hasTag', $this, 'hasTags'); 
+		$this->addHook('Page::hasTags', $this, 'hasTags'); 
+	}
+
+	/**
+	 * The method for checking if the current template has the tags set.
+	 *
+	 * @return boolean
+	 */
+	public function hasTags($event) {
+		//vars
+		$page = $event->object;
+		$args = preg_split("/[ |,]/", $event->arguments[0]);
+		$tags = $page->template->tags;
+		
+		//loop the arguments and check each against the tags;
+		$match = 0;
+		foreach($args as $arg){
+			$found = (preg_match("/\b".str_replace("!", "", $arg)."/", $tags) == 1);
+			$exclude = (substr($arg,0,1) == "!");
+			if(($exclude xor $found)){
+				$match++;
+			}
+		}
+		
+		//return true if they all match
+		if($match == count($args)){
+			$event->return = true;
+		}else{
+			$event->return = false;
+		}
+	}
+	
+}
